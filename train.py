@@ -3,20 +3,18 @@ import os
 import shutil
 from time import time
 
-import torch
-import torch.nn.functional as F
 import torchvision
 from torch.utils.tensorboard import SummaryWriter
 
 import config
-from classifier_models import PreActResNet18, ResNet18
-from networks.models import Denormalizer, NetC_MNIST
-from utils.dataloader import PostTensorTransform, get_dataloader
-from utils.utils import progress_bar
+from classifier_models import ResNet18
+from models.densenet import *
 from models.model_zoo import *
 from models.resnets import resnet20s
-from models.densenet import *
 from models.vgg import *
+from networks.models import Denormalizer
+from utils.dataloader import PostTensorTransform, get_dataloader
+from utils.utils import progress_bar
 
 
 def get_model(opt):

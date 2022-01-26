@@ -3,39 +3,49 @@ import os
 import shutil
 from time import time
 
-import config
-import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision
-from classifier_models import PreActResNet18, ResNet18
-from networks.models import Denormalizer, NetC_MNIST, Normalizer
-from torch import nn
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.transforms import RandomErasing
+
+import config
+from classifier_models import PreActResNet18, ResNet18
+from networks.models import Denormalizer, NetC_MNIST
 from utils.dataloader import PostTensorTransform, get_dataloader
 from utils.utils import progress_bar
+from models.model_zoo import *
+from models.resnets import resnet20s
+from models.densenet import *
+from models.vgg import *
 
 
 def get_model(opt):
-    netC = None
+    model = None
     optimizerC = None
     schedulerC = None
 
-    if opt.dataset == "cifar10" or opt.dataset == "gtsrb":
-        netC = PreActResNet18(num_classes=opt.num_classes).to(opt.device)
-    if opt.dataset == "celeba":
-        netC = ResNet18().to(opt.device)
-    if opt.dataset == "mnist":
-        netC = NetC_MNIST().to(opt.device)
+    classes = opt.num_classes
+
+    if opt.model_type == "resnet20":
+        model = resnet20s(num_classes=classes)
+    elif opt.model_type == "resnet18":
+        model = vgg16_bn(num_classes=classes)
+    elif opt.model_type == "densenet100":
+        model = densenet_100_12(num_classes=classes)
+    elif opt.model_type == "resnet18":
+        model = ResNet18(num_classes=classes)
+    else:
+        raise NotImplementedError
+
+    model = model.to(opt.device)
 
     # Optimizer
-    optimizerC = torch.optim.SGD(netC.parameters(), opt.lr_C, momentum=0.9, weight_decay=5e-4)
+    optimizerC = torch.optim.SGD(model.parameters(), opt.lr_C, momentum=0.9, weight_decay=5e-4)
 
     # Scheduler
     schedulerC = torch.optim.lr_scheduler.MultiStepLR(optimizerC, opt.schedulerC_milestones, opt.schedulerC_lambda)
 
-    return netC, optimizerC, schedulerC
+    return model, optimizerC, schedulerC
 
 
 def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_writer, epoch, opt):
@@ -82,9 +92,9 @@ def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_
         if opt.attack_mode == "all2all":
             targets_bd = torch.remainder(targets[:num_bd], opt.num_classes)
 
-        inputs_cross = F.grid_sample(inputs[num_bd : (num_bd + num_cross)], grid_temps2, align_corners=True)
+        inputs_cross = F.grid_sample(inputs[num_bd: (num_bd + num_cross)], grid_temps2, align_corners=True)
 
-        total_inputs = torch.cat([inputs_bd, inputs_cross, inputs[(num_bd + num_cross) :]], dim=0)
+        total_inputs = torch.cat([inputs_bd, inputs_cross, inputs[(num_bd + num_cross):]], dim=0)
         total_inputs = transforms(total_inputs)
         total_targets = torch.cat([targets_bd, targets[num_bd:]], dim=0)
         start = time()
@@ -105,13 +115,13 @@ def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_
         total_bd += num_bd
         total_cross += num_cross
         total_clean_correct += torch.sum(
-            torch.argmax(total_preds[(num_bd + num_cross) :], dim=1) == total_targets[(num_bd + num_cross) :]
+            torch.argmax(total_preds[(num_bd + num_cross):], dim=1) == total_targets[(num_bd + num_cross):]
         )
         total_bd_correct += torch.sum(torch.argmax(total_preds[:num_bd], dim=1) == targets_bd)
         if num_cross:
             total_cross_correct += torch.sum(
-                torch.argmax(total_preds[num_bd : (num_bd + num_cross)], dim=1)
-                == total_targets[num_bd : (num_bd + num_cross)]
+                torch.argmax(total_preds[num_bd: (num_bd + num_cross)], dim=1)
+                == total_targets[num_bd: (num_bd + num_cross)]
             )
             avg_acc_cross = total_cross_correct * 100.0 / total_cross
 
@@ -161,18 +171,18 @@ def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_
 
 
 def eval(
-    netC,
-    optimizerC,
-    schedulerC,
-    test_dl,
-    noise_grid,
-    identity_grid,
-    best_clean_acc,
-    best_bd_acc,
-    best_cross_acc,
-    tf_writer,
-    epoch,
-    opt,
+        netC,
+        optimizerC,
+        schedulerC,
+        test_dl,
+        noise_grid,
+        identity_grid,
+        best_clean_acc,
+        best_bd_acc,
+        best_cross_acc,
+        tf_writer,
+        epoch,
+        opt,
 ):
     print(" Eval:")
     netC.eval()
@@ -344,8 +354,8 @@ def main():
         ins = ins / torch.mean(torch.abs(ins))
         noise_grid = (
             F.upsample(ins, size=opt.input_height, mode="bicubic", align_corners=True)
-            .permute(0, 2, 3, 1)
-            .to(opt.device)
+                .permute(0, 2, 3, 1)
+                .to(opt.device)
         )
         array1d = torch.linspace(-1, 1, steps=opt.input_height)
         x, y = torch.meshgrid(array1d, array1d)

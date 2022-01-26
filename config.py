@@ -9,6 +9,8 @@ def get_arguments():
     parser.add_argument("--temps", type=str, default="./temps")
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--continue_training", action="store_true")
+    parser.add_argument("--model_type", type=str, default="resnet20",
+                        choices=["resnet18, densenet100, resnet20, vgg16"])
 
     parser.add_argument("--dataset", type=str, default="cifar10")
     parser.add_argument("--attack_mode", type=str, default="all2one")

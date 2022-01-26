@@ -64,7 +64,7 @@ def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_
 
     denormalizer = Denormalizer(opt)
     transforms = PostTensorTransform(opt).to(opt.device)
-    total_time = 0
+    # total_time = 0
 
     avg_acc_cross = 0
 
@@ -95,9 +95,9 @@ def train(netC, optimizerC, schedulerC, train_dl, noise_grid, identity_grid, tf_
         total_inputs = torch.cat([inputs_bd, inputs_cross, inputs[(num_bd + num_cross):]], dim=0)
         total_inputs = transforms(total_inputs)
         total_targets = torch.cat([targets_bd, targets[num_bd:]], dim=0)
-        start = time()
+        # start = time()
         total_preds = netC(total_inputs)
-        total_time += time() - start
+        # total_time += time() - start
 
         loss_ce = criterion_CE(total_preds, total_targets)
 

@@ -23,22 +23,19 @@ author, Yerlan Idelbayev.
 Borrow from : https://github.com/akamaster/pytorch_resnet_cifar10.git
 '''
 
-import torch
 import torch.nn as nn
-import torch.nn.init as init
 import torch.nn.functional as F
-
-from torch.autograd import Variable
-from advertorch.utils import NormalizeByChannelMeanStd
+import torch.nn.init as init
 
 __all__ = ['ResNets', 'resnet20s', 'resnet32s', 'resnet44s', 'resnet56s', 'resnet110s', 'resnet1202s']
 
 
 def _weights_init(m):
     classname = m.__class__.__name__
-    #print(classname)
+    # print(classname)
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         init.kaiming_normal_(m.weight)
+
 
 class LambdaLayer(nn.Module):
     def __init__(self, lambd):
@@ -66,11 +63,12 @@ class BasicBlock(nn.Module):
                 For CIFAR10 ResNet paper uses option A.
                 """
                 self.shortcut = LambdaLayer(lambda x:
-                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes//4, planes//4), "constant", 0))
+                                            F.pad(x[:, :, ::2, ::2], (0, 0, 0, 0, planes // 4, planes // 4), "constant",
+                                                  0))
             elif option == 'B':
                 self.shortcut = nn.Sequential(
-                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
-                     nn.BatchNorm2d(self.expansion * planes)
+                    nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                    nn.BatchNorm2d(self.expansion * planes)
                 )
 
     def forward(self, x):
@@ -100,7 +98,7 @@ class ResNets(nn.Module):
         self.apply(_weights_init)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
@@ -142,4 +140,3 @@ def resnet110s(num_classes=10):
 
 def resnet1202s(num_classes=10):
     return ResNets(BasicBlock, [200, 200, 200], num_classes=num_classes)
-

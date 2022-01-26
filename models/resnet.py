@@ -6,18 +6,17 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 """
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pdb
-import numpy as np
 
 
 class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(
-        self, in_planes, planes, stride=1, train_dp=0, test_dp=0, droplayer=0, bdp=0
+            self, in_planes, planes, stride=1, train_dp=0, test_dp=0, droplayer=0, bdp=0
     ):
         # if test_dp > 0: will always keep dp there
         super(BasicBlock, self).__init__()
@@ -67,7 +66,7 @@ class Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(
-        self, in_planes, planes, stride=1, train_dp=0, test_dp=0, droplayer=0, bdp=0
+            self, in_planes, planes, stride=1, train_dp=0, test_dp=0, droplayer=0, bdp=0
     ):
         super(Bottleneck, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
@@ -114,13 +113,13 @@ class Bottleneck(nn.Module):
             if self.bdp > 0:
                 # each sample will be applied the same mask
                 bdp_mask = (
-                    torch.bernoulli(
-                        self.bdp
-                        * torch.ones(1, out.size(1), out.size(2), out.size(3)).to(
-                            out.device
+                        torch.bernoulli(
+                            self.bdp
+                            * torch.ones(1, out.size(1), out.size(2), out.size(3)).to(
+                                out.device
+                            )
                         )
-                    )
-                    / self.bdp
+                        / self.bdp
                 )
                 out = bdp_mask * out
 
@@ -132,16 +131,16 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(
-        self,
-        block,
-        num_blocks,
-        conv1_size=3,
-        num_classes=10,
-        train_dp=0,
-        test_dp=0,
-        droplayer=0,
-        bdp=0,
-        middle_feat_num=1,
+            self,
+            block,
+            num_blocks,
+            conv1_size=3,
+            num_classes=10,
+            train_dp=0,
+            test_dp=0,
+            droplayer=0,
+            bdp=0,
+            middle_feat_num=1,
     ):
         super(ResNet, self).__init__()
         self.in_planes = 64
@@ -226,8 +225,8 @@ class ResNet(nn.Module):
         for nl, layer in enumerate(self.layer4):
             out = layer(out)
             if (
-                len(self.layer4) - nl - 1 <= self.middle_feat_num
-                and len(self.layer4) - nl - 1 > 0
+                    len(self.layer4) - nl - 1 <= self.middle_feat_num
+                    and len(self.layer4) - nl - 1 > 0
             ):
                 feat_list.append(out)
 
@@ -248,16 +247,16 @@ class ResNet(nn.Module):
             layer.test_dp = dp
 
     def _make_layer(
-        self,
-        block,
-        planes,
-        num_blocks,
-        stride,
-        train_dp=0,
-        test_dp=0,
-        dl_start=9,
-        dl_step=0,
-        bdp=0,
+            self,
+            block,
+            planes,
+            num_blocks,
+            stride,
+            train_dp=0,
+            test_dp=0,
+            dl_start=9,
+            dl_step=0,
+            bdp=0,
     ):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []

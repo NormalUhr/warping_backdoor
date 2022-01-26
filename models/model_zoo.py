@@ -1,8 +1,9 @@
 import time
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from collections import OrderedDict
 
 
 class _Swish(torch.autograd.Function):
@@ -350,9 +351,9 @@ class PreActBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
 
-        if stride != 1 or in_planes != self.expansion*planes:
+        if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False)
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False)
             )
 
     def forward(self, x):
@@ -375,11 +376,11 @@ class PreActBottleneck(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion*planes, kernel_size=1, bias=False)
+        self.conv3 = nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
 
-        if stride != 1 or in_planes != self.expansion*planes:
+        if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False)
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False)
             )
 
     def forward(self, x):
@@ -405,7 +406,7 @@ class PreActResNet(nn.Module):
         self.linear = nn.Linear(512 * block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
@@ -450,19 +451,23 @@ def ResNet152(activation_func=nn.ReLU(), num_classes=10):
 
 
 def WRN_16_8(dropout=0.1, activation_fn=nn.ReLU, num_classes=10):
-    return WideResNet(width_factor=8, depth=16, dropout=dropout, in_channels=3, labels=num_classes, activation_fn=activation_fn)
+    return WideResNet(width_factor=8, depth=16, dropout=dropout, in_channels=3, labels=num_classes,
+                      activation_fn=activation_fn)
 
 
 def WRN_28_10(dropout=0.1, activation_fn=nn.ReLU, num_classes=10):
-    return WideResNet(width_factor=10, depth=28, dropout=dropout, in_channels=3, labels=num_classes, activation_fn=activation_fn)
+    return WideResNet(width_factor=10, depth=28, dropout=dropout, in_channels=3, labels=num_classes,
+                      activation_fn=activation_fn)
 
 
 def WRN_34_10(dropout=0.1, activation_fn=nn.ReLU, num_classes=10):
-    return WideResNet(width_factor=10, depth=34, dropout=dropout, in_channels=3, labels=num_classes, activation_fn=activation_fn)
+    return WideResNet(width_factor=10, depth=34, dropout=dropout, in_channels=3, labels=num_classes,
+                      activation_fn=activation_fn)
 
 
 def WRN_70_16(dropout=0.1, activation_fn=nn.ReLU, num_classes=10):
-    return WideResNet(width_factor=16, depth=70, dropout=dropout, in_channels=3, labels=num_classes, activation_fn=activation_fn)
+    return WideResNet(width_factor=16, depth=70, dropout=dropout, in_channels=3, labels=num_classes,
+                      activation_fn=activation_fn)
 
 
 def test():

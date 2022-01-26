@@ -3,25 +3,25 @@
 See the paper "Inverted Residuals and Linear Bottlenecks:
 Mobile Networks for Classification, Detection and Segmentation" for more details.
 """
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 
 class Block(nn.Module):
     """expand + depthwise + pointwise"""
 
     def __init__(
-        self,
-        in_planes,
-        out_planes,
-        expansion,
-        stride,
-        train_dp,
-        test_dp,
-        droplayer=0,
-        bdp=0,
+            self,
+            in_planes,
+            out_planes,
+            expansion,
+            stride,
+            train_dp,
+            test_dp,
+            droplayer=0,
+            bdp=0,
     ):
         super(Block, self).__init__()
         self.stride = stride
@@ -81,13 +81,13 @@ class Block(nn.Module):
             if self.bdp > 0:
                 # each sample will be applied the same mask
                 bdp_mask = (
-                    torch.bernoulli(
-                        self.bdp
-                        * torch.ones(1, out.size(1), out.size(2), out.size(3)).to(
-                            out.device
+                        torch.bernoulli(
+                            self.bdp
+                            * torch.ones(1, out.size(1), out.size(2), out.size(3)).to(
+                                out.device
+                            )
                         )
-                    )
-                    / self.bdp
+                        / self.bdp
                 )
                 out = bdp_mask * out
 
